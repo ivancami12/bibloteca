@@ -1,0 +1,288 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Panel de Control - Bibliotecario{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1>Panel de Control del Bibliotecario</h1>
+        <h2>Estadísticas</h2>
+        <div class="btn-group mb-3" role="group" aria-label="Botones de tipo de gráfico">
+            <button type="button" class="btn btn-primary" onclick="changeChartType('bar')" aria-label="Cambiar a gráfico de barras">Barras</button>
+            <button type="button" class="btn btn-success" onclick="changeChartType('line')" aria-label="Cambiar a gráfico de líneas">Línea</button>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card text-white bg-primary mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Usuarios</h5>
+                        <p class="card-text">Total de Usuarios: {{ usuarioCount }}</p>
+                        <a href="#" class="text-light custom-hover">
+                        <i class="bi bi-eye"></i> ver
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-white bg-success mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Libros</h5>
+                        <p class="card-text">Total de Libros: {{ libroCount }}</p>
+                        <a href="#" class="text-light custom-hover" onclick="toggleTable('librosTable')">
+                        <i class="bi bi-eye"></i> ver
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-white bg-warning mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Libros Prestados sin Devolución</h5>
+                        <p class="card-text">{{ queryCount }}</p>   
+                        <a href="#" class="text-light custom-hover">
+                        <i class="bi bi-eye"></i> ver
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <canvas id="chartLibrosUsuarios"></canvas>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="floating-table" id="librosTable" style="display:none;">
+                    <div class="mb-3">
+                        <input type="text" id="searchInput" placeholder="Buscar libros por título o autor..." class="form-control" onkeyup="searchBooks()">
+                    </div>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Autor</th>
+                                <th>Fecha de Publicación</th>
+                                <th>Imagen</th>
+                                <th>Acciones</th> <!-- Nueva columna de acciones -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if lista_libro is not empty %}
+                                {% for libro in lista_libro %}
+                                    <tr>
+                                        <td>{{ libro.titulo }}</td>
+                                        <td>{{ libro.autor }}</td>
+                                        <td>{{ libro.publicado|date('d-m-Y') }}</td>
+                                        <td>
+                                            <img src="{{ libro.imagen }}" alt="{{ libro.titulo }}" style="width: 100px;"/>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-warning btn-sm" onclick="editBook('{{ libro.titulo }}')">
+                                                <i class="bi bi-pencil"></i> Editar
+                                            </button>
+                                            <button class="btn btn-danger btn-sm" onclick="deleteBook('{{ libro.titulo }}')">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5">No hay libros disponibles.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>    
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        var ctx = document.getElementById('chartLibrosUsuarios').getContext('2d');
+        var chart = new Chart(ctx, getChartData('bar')); // Inicializa el gráfico
+
+        // Función para cambiar el tipo de gráfico
+        window.changeChartType = function(newType) {
+            chart.destroy(); // Destruye el gráfico actual
+            chart = new Chart(ctx, getChartData(newType)); // Crea un nuevo gráfico
+            alert('El gráfico ha cambiado a ' + newType); // Mensaje de feedback
+        };
+        // Función para obtener datos del gráfico según el tipo
+        function getChartData(type) {
+        return {
+            type: type,
+            data: {
+                labels: ['Usuarios', 'Libros', 'Libros Prestados sin Devolución'],
+                datasets: [{
+                    label: 'Cantidad',
+                    data: [
+                        {{ usuarioCount }},
+                        {{ libroCount }},
+                        {{ queryCount }} 
+                    ],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1,
+                    hoverBackgroundColor: [
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(255, 159, 64, 0.5)'
+                    ],
+                    hoverBorderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ]
+                }]
+            },
+            options: {  
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)' // Color de la cuadrícula
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return 'Cantidad: ' + tooltipItem.raw;
+                            },
+                            afterLabel: function(tooltipItem) {
+                                const labels = [
+                                    'Usuarios activos en el sistema.',
+                                    'Cantidad total de libros disponibles.',
+                                    'Libros prestados sin devolución.'
+                                ];
+                                return labels[tooltipItem.dataIndex];
+                            }
+                        },
+                    animation: {
+                        duration: 300, // Duración de la animación del tooltip
+                        easing: 'easeInOutQuad' // Easing para el tooltip
+                        }
+                    },
+                    legend: {
+                        display: true,
+                        onClick: function(e, legendItem) {
+                            const index = legendItem.datasetIndex;
+                            const ci = this.chart;
+                            const meta = ci.getDatasetMeta(index);
+
+                            // Alterna la visibilidad del dataset
+                            meta.hidden = meta.hidden === null ? !ci.data.datasets[index].hidden : null;
+                            ci.update();
+                        }
+                    },
+                    animation: {
+                        duration: 1500, // Duración de la animación del gráfico
+                        easing: 'easeOutBounce' // Tipo de animación
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        function searchBooks() {
+            var input = document.getElementById("searchInput");
+            var filter = input.value.toLowerCase();
+            var table = document.getElementById("librosTable");
+            var tr = table.getElementsByTagName("tr");
+
+            // Recorre todas las filas de la tabla y oculta las que no coinciden con el filtro
+            for (let i = 1; i < tr.length; i++) {
+                tr[i].style.display = "none"; // Oculta todas las filas
+                let td = tr[i].getElementsByTagName("td");
+                for (let j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        let txtValue = td[j].textContent || td[j].innerText;
+                        if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                            tr[i].style.display = ""; // Muestra la fila que coincide
+                            break; // Sale del bucle si se encuentra una coincidencia
+                        }
+                    }
+                }
+            }
+        }
+        function toggleTable(tableId) {
+            var table = document.getElementById(tableId);
+                table.style.display = table.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
+    <style>
+        .floating-table {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #ffffff; /* Blanco puro */
+            border: 1px solid #dee2e6; /* Color de borde más suave */
+            border-radius: 8px; /* Bordes redondeados */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Sombra más suave */
+            padding: 20px; /* Espacio interior aumentado */
+            z-index: 1000;
+            width: 300px;
+            max-height: 400px; /* Limita la altura máxima */
+            overflow-y: auto; /* Habilita desplazamiento vertical si es necesario */
+            transition: transform 0.3s ease, box-shadow 0.3s ease; /* Transiciones suaves */
+        }
+
+        .floating-table:hover {
+            transform: translateY(-5px); /* Efecto de elevación al pasar el mouse */
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25); /* Sombra más pronunciada al pasar el mouse */
+        }
+
+        .floating-table table {
+            width: 100%;
+            border-collapse: collapse; /* Evita espacios entre celdas */
+            transition: background-color 0.2s ease; /* Transición para el fondo */
+        }
+
+        .floating-table th, .floating-table td {
+            padding: 12px; /* Aumenta el padding para mejor legibilidad */
+            text-align: left; /* Alineación del texto */
+            transition: background-color 0.2s ease; /* Transición suave para el fondo */
+        }
+
+        .floating-table thead {
+            background-color: #007bff; /* Color de fondo azul */
+            color: white; /* Texto blanco para contraste */
+        }
+
+        .floating-table tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.1); /* Fondo azul claro al pasar el mouse */
+            transition: background-color 0.3s ease; /* Transición suave */
+        }
+
+        .floating-table td img {
+            max-width: 100px; /* Controla el tamaño de las imágenes */
+            border-radius: 5px; /* Bordes redondeados para imágenes */
+            transition: transform 0.2s ease; /* Transición suave al escalar la imagen */
+        }
+
+        .floating-table td img:hover {
+            transform: scale(1.1); /* Escala la imagen al pasar el mouse */
+        }
+
+        @media (max-width: 768px) {
+            .floating-table {
+                width: 90%; /* Ancho mayor en pantallas pequeñas */
+                right: 5%; /* Centrar horizontalmente */
+            }
+        }
+    </style>
+{% endblock %}

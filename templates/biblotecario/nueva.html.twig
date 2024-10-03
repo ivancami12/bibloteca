@@ -1,0 +1,32 @@
+{# templates/biblotecario/nueva.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h1>Deja tu Opinión</h1>
+
+        {{ form_start(form) }}
+
+        <div class="form-group">
+            {{ form_label(form.libro) }}
+            {{ form_widget(form.libro, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.libro) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(form.contenido) }}
+            {{ form_widget(form.contenido, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.contenido) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(form.usuario) }}
+            {{ form_widget(form.usuario, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.usuario) }}
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Enviar</button>
+
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

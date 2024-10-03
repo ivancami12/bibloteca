@@ -1,0 +1,91 @@
+{% extends 'base.html.twig' %}
+{% block title %}Recomendaciones de Libros{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1>lista de libros</h1>
+        <h2>Nuevo dato</h2>
+        {# {{ form_start(formulario) }} #}
+            {# {{ form_widget(formulario) }} #}
+            {# <button type="submit">Enviar</button> #}
+        {# {{ form_end(formulario) }} #}    
+
+        <div class="row">
+            <div class="col-md-12">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <td>Titulo</td>
+                            <td>Autor</td>
+                            <td>Fecha de Publicación</td>
+                            <td>imagenn</td>
+                            <td>Opciones</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if libros is not empty %}
+                            {% for libro in libros %}
+                                <tr>
+                                    <td>{{ libro.titulo }}</td>
+                                    <td>{{ libro.autor }}</td>
+                                    <td>{{ libro.publicado|date('d-m-Y') }}</td>
+                                    <td>
+                                        <img src="{{ libro.imagen }}" alt="{{ libro.titulo }}" style="width: 100px;"/>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-warning btn-sm" onclick="editBook('{{ libro.titulo }}')">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteBook('{{ libro.titulo }}')">
+                                            <i class="bi bi-trash"></i> Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5">No hay libros disponibles.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Sección de Recomendaciones -->
+        <h2 class="display-4 mt-5">Recomendaciones de libros</h2>
+        <h3 class="display-5">subtitulo</h3>
+        <div class="row">
+            {% for libro in libros %}
+                <div class="col-md-4 md-3">
+                    <div class="card">
+                        <img src="{{ libro.imagen }}" class="card-img-top" alt="{{ libro.titulo }}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ libro.titulo }}</h5>
+                            <p class="card-text">Autor: {{ libro.reseña.contenido }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <style>
+        .card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-img-top {
+            height: 200px; /* Ajusta según tus necesidades */
+            object-fit: cover; /* Para mantener la proporción de la imagen */
+        }
+
+        .text-light.custom-hover:hover {
+            text-decoration: underline; /* Agregar un efecto hover en los enlaces */
+        }
+    </style>
+{% endblock %}
